@@ -21,5 +21,9 @@ public class SampleData {
 	}
 
 	System.out.println("Total Weekly Expense: ₹" + total);
+	
+	double average = total / weeklyExpenses.length;
+
+	System.out.println("Average Daily Expense: ₹" + average);
     }
 }
