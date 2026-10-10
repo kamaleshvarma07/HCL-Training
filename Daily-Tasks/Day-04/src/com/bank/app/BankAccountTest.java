@@ -1,4 +1,3 @@
-
 package com.bank.app;
 
 import com.bank.model.BankAccount;
@@ -15,25 +14,36 @@ public class BankAccountTest {
         System.out.println("Initial Balance: "
                 + account.getBalance());
 
-        account.deposit(1000.0);
+        if (account.deposit(1000.0)) {
+            System.out.println("Deposit successful.");
+        } else {
+            System.out.println("Deposit rejected.");
+        }
+
         System.out.println("After Deposit: "
                 + account.getBalance());
 
-        account.withdraw(2000.0);
+        if (account.withdraw(2000.0)) {
+            System.out.println("Withdrawal successful.");
+        } else {
+            System.out.println("Withdrawal rejected.");
+        }
+
         System.out.println("After Withdrawal: "
                 + account.getBalance());
-        try {
-            account.withdraw(10000.0);
-        } catch (IllegalArgumentException e) {
-        System.out.println("Withdrawal rejected: " + e.getMessage());
+
+        if (account.withdraw(10000.0)) {
+            System.out.println("Withdrawal successful.");
+        } else {
+            System.out.println("Withdrawal rejected: Insufficient balance.");
         }
 
         System.out.println("Balance after rejected withdrawal: "
-        + account.getBalance());
+                + account.getBalance());
 
         System.out.println("Total Accounts: "
                 + BankAccount.getTotalAccounts());
-        
+
         BankAccount anotherAccount = new BankAccount("Arun", 4000.0);
 
         System.out.println("Accounts equal: "

@@ -1,5 +1,6 @@
-
 package com.bank.model;
+
+import java.util.Objects;
 
 public class BankAccount {
 
@@ -7,7 +8,6 @@ public class BankAccount {
     private double balance;
     private static int totalAccounts = 0;
 
-    
     // First constructor
     public BankAccount() {
         this("Unknown", 0.0);
@@ -18,87 +18,68 @@ public class BankAccount {
         this(accountHolder, 0.0);
     }
 
-   
+    // Third constructor
     public BankAccount(String accountHolder, double balance) {
-    if (balance < 0) {
-        throw new IllegalArgumentException(
-            "Initial balance cannot be negative"
-        );
+        if (balance < 0) {
+            System.out.println("Initial balance cannot be negative.");
+            return;
+        }
+
+        this.accountHolder = accountHolder;
+        this.balance = balance;
+        totalAccounts++;
     }
 
-    this.accountHolder = accountHolder;
-    this.balance = balance;
-    totalAccounts++;
-}
-
-
-    
-    // Deposit money into the account
-    public void deposit(double amount) {
+    // Deposit money
+    public boolean deposit(double amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException(
-                "Deposit amount must be greater than zero"
-            );
+            return false;
         }
 
         balance += amount;
-    }
-
-    
-    // Withdraw money from the account
-    public void withdraw(double amount) {
-        if (amount <= 0) {
-            throw new IllegalArgumentException(
-                "Withdrawal amount must be greater than zero"
-            );
-        }
-
-        if (amount > balance) {
-            throw new IllegalArgumentException(
-                "Insufficient balance"
-            );
-        }
-
-        balance -= amount;
-    }
-
-    // Return the account holder's name
-public String getAccountHolder() {
-    return accountHolder;
-}
-
-// Return the total number of accounts created
-public static int getTotalAccounts() {
-    return totalAccounts;
-}
-
-// Return the current account balance
-public double getBalance() {
-    return balance;
-}
-
-@Override
-public boolean equals(Object obj) {
-    if (this == obj) {
         return true;
     }
 
-    if (obj == null || getClass() != obj.getClass()) {
-        return false;
+    // Withdraw money
+    public boolean withdraw(double amount) {
+        if (amount <= 0 || amount > balance) {
+            return false;
+        }
+
+        balance -= amount;
+        return true;
     }
 
-    BankAccount other = (BankAccount) obj;
+    public String getAccountHolder() {
+        return accountHolder;
+    }
 
-    return java.util.Objects.equals(
-            accountHolder, other.accountHolder)
-            && Double.compare(balance, other.balance) == 0;
-}
+    public static int getTotalAccounts() {
+        return totalAccounts;
+    }
 
-@Override
-public int hashCode() {
-    return java.util.Objects.hash(accountHolder, balance);
-}
+    public double getBalance() {
+        return balance;
+    }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
 
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
 
+        BankAccount other = (BankAccount) obj;
+
+        return Objects.equals(accountHolder, other.accountHolder)
+                && Double.compare(balance, other.balance) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(accountHolder, balance);
+    }
 }
