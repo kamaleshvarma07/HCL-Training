@@ -46,7 +46,7 @@ public class BankAccount {
             return false;
         }
 
-        balance -= amount;
+        balance -= amount;//should be balance -= amount; to correctly withdraw the amount
         return true;
     }
 
