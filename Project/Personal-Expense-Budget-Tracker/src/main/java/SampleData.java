@@ -1,10 +1,15 @@
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 public class SampleData {
 
     public static void main(String[] args) {
 
-        double[] weeklyExpenses = {
-            200.0, 150.0, 300.0, 100.0,
-            250.0, 400.0, 180.0
+        BigDecimal[] weeklyExpenses = {
+            new BigDecimal("200.00"), new BigDecimal("150.00"),
+            new BigDecimal("300.00"), new BigDecimal("100.00"),
+            new BigDecimal("250.00"), new BigDecimal("400.00"),
+            new BigDecimal("180.00")
         };
 
         System.out.println("Weekly Expenses:");
@@ -14,15 +19,16 @@ public class SampleData {
         }
 		
 
-	double total = 0;
+	BigDecimal total = BigDecimal.ZERO;
 
-	for (double expense : weeklyExpenses) {
-		total += expense;
+	for (BigDecimal expense : weeklyExpenses) {
+		total = total.add(expense);
 	}
 
 	System.out.println("Total Weekly Expense: ₹" + total);
 	
-	double average = total / weeklyExpenses.length;
+	BigDecimal average = total.divide(
+			BigDecimal.valueOf(weeklyExpenses.length), 2, RoundingMode.HALF_UP);
 
 	System.out.println("Average Daily Expense: ₹" + average);
     }
