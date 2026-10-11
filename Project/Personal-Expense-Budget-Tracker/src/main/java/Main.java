@@ -6,7 +6,7 @@ public class Main {
 
         Scanner sc = new Scanner(System.in);
 
-        int choice;
+        int choice = 0;
 
         do {
             System.out.println("\n===== PERSONAL EXPENSE & BUDGET TRACKER =====");
@@ -21,7 +21,17 @@ public class Main {
             System.out.println("9. Exit");
 
             System.out.print("Enter your choice: ");
-            choice = sc.nextInt();
+            if (!sc.hasNextLine()) {
+                System.out.println("End of input. Exiting application...");
+                break;
+            }
+            String input = sc.nextLine().trim();
+            try {
+                choice = Integer.parseInt(input);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid choice. Please enter a number.");
+                continue;
+            }
 
             switch (choice) {
 
