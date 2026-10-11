@@ -17,6 +17,18 @@ public class ATM {
         for (int attempt = 1; attempt <= 3; attempt++) {
 
             System.out.print("Enter PIN: ");
+            if (!sc.hasNext()) {
+                System.out.println("End of input. Exiting ATM.");
+                sc.close();
+                return;
+            }
+
+            if (!sc.hasNextInt()) {
+                sc.next();
+                System.out.println("Incorrect PIN.");
+                continue;
+            }
+
             int pin = sc.nextInt();
 
             if (pin == CORRECT_PIN) {
@@ -44,9 +56,13 @@ public class ATM {
             System.out.println("3. Withdraw");
             System.out.println("4. Mini Statement");
             System.out.println("5. Exit");
-            System.out.print("Enter your choice: ");
-
-            choice = sc.nextInt();
+            Integer enteredChoice = readInt(sc, "Enter your choice: ");
+            if (enteredChoice == null) {
+                System.out.println("End of input. Exiting ATM.");
+                choice = 5;
+                break;
+            }
+            choice = enteredChoice;
 
             switch (choice) {
 
@@ -55,10 +71,15 @@ public class ATM {
                     break;
 
                 case 2:
-                    System.out.print("Enter deposit amount: ");
-                    double deposit = sc.nextDouble();
+                    Double enteredDeposit = readDouble(sc, "Enter deposit amount: ");
+                    if (enteredDeposit == null) {
+                        System.out.println("End of input. Exiting ATM.");
+                        choice = 5;
+                        break;
+                    }
+                    double deposit = enteredDeposit;
 
-                    if (deposit <= 0) {
+                    if (!Double.isFinite(deposit) || deposit <= 0) {
                         System.out.println("Invalid amount.");
                         continue;
                     }
@@ -74,10 +95,15 @@ public class ATM {
                     break;
 
                 case 3:
-                    System.out.print("Enter withdrawal amount: ");
-                    double withdrawal = sc.nextDouble();
+                    Double enteredWithdrawal = readDouble(sc, "Enter withdrawal amount: ");
+                    if (enteredWithdrawal == null) {
+                        System.out.println("End of input. Exiting ATM.");
+                        choice = 5;
+                        break;
+                    }
+                    double withdrawal = enteredWithdrawal;
 
-                    if (withdrawal <= 0) {
+                    if (!Double.isFinite(withdrawal) || withdrawal <= 0) {
                         System.out.println("Invalid amount.");
                         continue;
                     }
@@ -103,8 +129,10 @@ public class ATM {
                     if (transactionCount == 0) {
                         System.out.println("No transactions.");
                     } else {
-                        for (int i = 0; i < transactionCount; i++) {
-                            System.out.println(transactions[i]);
+                        for (String transaction : transactions) {
+                            if (transaction != null) {
+                                System.out.println(transaction);
+                            }
                         }
                     }
 
@@ -122,5 +150,33 @@ public class ATM {
         } while (choice != 5);
 
         sc.close();
+    }
+
+    private static Integer readInt(Scanner sc, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            if (!sc.hasNext()) {
+                return null;
+            }
+            if (sc.hasNextInt()) {
+                return sc.nextInt();
+            }
+            sc.next();
+            System.out.println("Invalid input. Please enter a whole number.");
+        }
+    }
+
+    private static Double readDouble(Scanner sc, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            if (!sc.hasNext()) {
+                return null;
+            }
+            if (sc.hasNextDouble()) {
+                return sc.nextDouble();
+            }
+            sc.next();
+            System.out.println("Invalid input. Please enter a numeric amount.");
+        }
     }
 }
