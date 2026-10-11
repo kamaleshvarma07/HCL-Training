@@ -73,5 +73,30 @@ public class MonthlyUsageAnalyser {
 
             System.out.println();
         }
+
+        // Primitive ranges (boolean has two values: true and false)
+        System.out.println("\n===== Primitive Ranges =====");
+        System.out.println("byte: " + Byte.MIN_VALUE + " to " + Byte.MAX_VALUE);
+        System.out.println("short: " + Short.MIN_VALUE + " to " + Short.MAX_VALUE);
+        System.out.println("int: " + Integer.MIN_VALUE + " to " + Integer.MAX_VALUE);
+        System.out.println("long: " + Long.MIN_VALUE + " to " + Long.MAX_VALUE);
+        System.out.println("float: " + (-Float.MAX_VALUE) + " to " + Float.MAX_VALUE);
+        System.out.println("double: " + (-Double.MAX_VALUE) + " to " + Double.MAX_VALUE);
+        System.out.println("char: " + (int) Character.MIN_VALUE + " to " + (int) Character.MAX_VALUE);
+        System.out.println("boolean: true or false");
+
+        // Narrowing cast discards the fractional part
+        double decimalUsage = 9.75;
+        int wholeUsage = (int) decimalUsage;
+        System.out.println("Narrowing cast: (int) 9.75 = " + wholeUsage);
+
+        // Multiplication has higher precedence than addition
+        System.out.println("Precedence: 2 + 3 * 4 = " + (2 + 3 * 4));
+        System.out.println("Parentheses: (2 + 3) * 4 = " + ((2 + 3) * 4));
+
+        // Binary floating-point cannot represent every decimal exactly
+        double decimalSum = 0.1 + 0.2;
+        System.out.println("Floating-point: 0.1 + 0.2 = " + decimalSum);
+        System.out.println("Is the sum exactly 0.3? " + (decimalSum == 0.3));
     }
 }
