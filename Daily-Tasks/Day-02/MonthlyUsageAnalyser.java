@@ -4,6 +4,10 @@ public class MonthlyUsageAnalyser {
     public static final int SLAB_1_LIMIT = 100;
     public static final int SLAB_2_LIMIT = 200;
 
+    // Grade thresholds
+    public static final int GRADE_A_THRESHOLD = 200;
+    public static final int GRADE_B_THRESHOLD = 150;
+
     public static void main(String[] args) {
 
         // 12 months of usage
@@ -34,7 +38,8 @@ public class MonthlyUsageAnalyser {
         double average = (double) total / monthlyUsage.length;
 
         // Ternary operator for grade
-        char grade = average >= 200 ? 'A' : average >= 150 ? 'B' : 'C';
+        char grade = average >= GRADE_A_THRESHOLD ? 'A'
+                : average >= GRADE_B_THRESHOLD ? 'B' : 'C';
 
         System.out.println("===== Monthly Usage Analyser =====");
         System.out.println("Total Usage   : " + total);
