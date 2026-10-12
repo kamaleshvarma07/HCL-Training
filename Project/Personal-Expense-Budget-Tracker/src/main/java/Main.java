@@ -1,4 +1,11 @@
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Scanner;
+
+import com.hcltraining.exception.InsufficientFundsException;
+import com.hcltraining.exception.InvalidTransactionAmountException;
+import com.hcltraining.model.Account;
+import com.hcltraining.model.Transaction;
 
 public class Main {
 
@@ -6,6 +13,7 @@ public class Main {
 
         Scanner sc = new Scanner(System.in);
 
+        Account account = new Account(1, "Everyday", "Checking", new BigDecimal("500.00"));
         int choice = 0;
 
         do {
@@ -34,17 +42,17 @@ public class Main {
             }
 
             switch (choice) {
-
                 case 1:
                     System.out.println("Create Account selected.");
                     break;
 
                 case 2:
-                    System.out.println("Manage Transactions selected.");
+                    manageExpense(sc, account);
                     break;
 
                 case 3:
-                    System.out.println("View Account Balance selected.");
+                    System.out.println("View Account Balance selected. Current balance: "
+                            + account.getBalance());
                     break;
 
                 case 4:
@@ -78,5 +86,28 @@ public class Main {
         } while (choice != 9);
 
         sc.close();
+    }
+
+    private static void manageExpense(Scanner sc, Account account) {
+        System.out.println("Manage Transactions selected. Enter simulated expense amount:");
+        if (!sc.hasNextLine()) {
+            System.out.println("No amount entered; returning to menu.");
+            return;
+        }
+
+        try {
+            BigDecimal amount = new BigDecimal(sc.nextLine().trim());
+            Transaction transaction = new Transaction(1, account.getId(), "EXPENSE",
+                    "General", amount, LocalDate.now(), "Menu expense");
+            account.withdraw(transaction.getAmount());
+            System.out.println("Simulated expense recorded. Remaining balance: "
+                    + account.getBalance());
+        } catch (NumberFormatException cause) {
+            InvalidTransactionAmountException invalidAmount =
+                    new InvalidTransactionAmountException("Enter a valid monetary amount.", cause);
+            System.out.println(invalidAmount.getMessage());
+        } catch (InvalidTransactionAmountException | InsufficientFundsException failure) {
+            System.out.println(failure.getMessage());
+        }
     }
 }

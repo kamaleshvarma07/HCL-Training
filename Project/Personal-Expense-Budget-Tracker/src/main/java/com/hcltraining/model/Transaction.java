@@ -4,6 +4,8 @@ package com.hcltraining.model;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import com.hcltraining.exception.InvalidTransactionAmountException;
+
 public class Transaction extends BaseEntity {
 
     private int accountId;
@@ -20,6 +22,10 @@ public class Transaction extends BaseEntity {
         this.accountId = accountId;
         this.type = type;
         this.category = category;
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InvalidTransactionAmountException(
+                    "Transaction amount must be greater than zero.");
+        }
         this.amount = amount;
         this.date = date;
         this.description = description;
