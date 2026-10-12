@@ -2,23 +2,18 @@ package com.hcltraining.model;
 
 import java.math.BigDecimal;
 
-public class Account {
+public class Account extends BaseEntity {
 
-    private int id;
     private String name;
     private String type;
     private BigDecimal balance;
 
     public Account(int id, String name, String type,
                    BigDecimal balance) {
-        this.id = id;
+        super(id);
         this.name = name;
         this.type = type;
         this.balance = balance;
-    }
-
-    public int getId() {
-        return id;
     }
 
     public String getName() {

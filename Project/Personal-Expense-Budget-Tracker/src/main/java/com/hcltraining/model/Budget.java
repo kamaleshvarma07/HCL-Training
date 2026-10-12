@@ -3,9 +3,8 @@ package com.hcltraining.model;
 
 import java.math.BigDecimal;
 
-public class Budget {
+public class Budget extends BaseEntity {
 
-    private int id;
     private String category;
     private BigDecimal limit;
     private int month;
@@ -13,15 +12,11 @@ public class Budget {
 
     public Budget(int id, String category, BigDecimal limit,
                   int month, int year) {
-        this.id = id;
+        super(id);
         this.category = category;
         this.limit = limit;
         this.month = month;
         this.year = year;
-    }
-
-    public int getId() {
-        return id;
     }
 
     public String getCategory() {
