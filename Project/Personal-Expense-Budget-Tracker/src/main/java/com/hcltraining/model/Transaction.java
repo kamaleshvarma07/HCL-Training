@@ -4,9 +4,8 @@ package com.hcltraining.model;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public class Transaction {
+public class Transaction extends BaseEntity {
 
-    private int id;
     private int accountId;
     private String type;
     private String category;
@@ -17,17 +16,13 @@ public class Transaction {
     public Transaction(int id, int accountId, String type,
                        String category, BigDecimal amount,
                        LocalDate date, String description) {
-        this.id = id;
+        super(id);
         this.accountId = accountId;
         this.type = type;
         this.category = category;
         this.amount = amount;
         this.date = date;
         this.description = description;
-    }
-
-    public int getId() {
-        return id;
     }
 
     public int getAccountId() {
