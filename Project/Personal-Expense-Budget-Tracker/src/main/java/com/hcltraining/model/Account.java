@@ -10,6 +10,7 @@ public class Account extends BaseEntity {
 
     private String name;
     private String type;
+    private final BigDecimal openingBalance;
     private BigDecimal balance;
 
     public Account(int id, String name, String type,
@@ -17,7 +18,11 @@ public class Account extends BaseEntity {
         super(id);
         this.name = name;
         this.type = type;
-        this.balance = Objects.requireNonNull(balance, "balance");
+        this.openingBalance = Objects.requireNonNull(balance, "balance");
+        if (openingBalance.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Opening balance cannot be negative.");
+        }
+        this.balance = openingBalance;
     }
 
     public String getName() {
@@ -30,6 +35,19 @@ public class Account extends BaseEntity {
 
     public BigDecimal getBalance() {
         return balance;
+    }
+
+    public BigDecimal getOpeningBalance() {
+        return openingBalance;
+    }
+
+    /** Updates the current balance after the service validates the complete transaction ledger. */
+    public void updateBalanceFromLedger(BigDecimal ledgerBalance) {
+        Objects.requireNonNull(ledgerBalance, "ledgerBalance");
+        if (ledgerBalance.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("A calculated account balance cannot be negative.");
+        }
+        balance = ledgerBalance;
     }
 
     /** Applies a simulated expense after enforcing amount and available-funds rules. */
