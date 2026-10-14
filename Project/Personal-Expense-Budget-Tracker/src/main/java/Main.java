@@ -1,11 +1,14 @@
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.Scanner;
 
 import com.hcltraining.exception.InsufficientFundsException;
 import com.hcltraining.exception.InvalidTransactionAmountException;
 import com.hcltraining.model.Account;
 import com.hcltraining.model.Transaction;
+import com.hcltraining.model.Budget;
+import com.hcltraining.model.RecurringRule;
 import com.hcltraining.service.FinanceService;
 
 public class Main {
@@ -53,13 +56,13 @@ public class Main {
                     viewBalance(sc, finance);
                     break;
                 case 4:
-                    System.out.println("Manage Recurring Transactions selected.");
+                    manageRecurringTransactions(sc, finance);
                     break;
                 case 5:
-                    System.out.println("Set Monthly Budget selected.");
+                    setMonthlyBudget(sc, finance);
                     break;
                 case 6:
-                    System.out.println("View Budget Alerts selected.");
+                    viewBudgetAlerts(sc, finance);
                     break;
                 case 7:
                     System.out.println("Import CSV selected.");
@@ -220,6 +223,67 @@ public class Main {
             System.out.println("Account " + account.getId() + " current balance: "
                     + account.getBalance());
         } catch (IllegalArgumentException failure) {
+            System.out.println(failure.getMessage());
+        }
+    }
+
+    private static void manageRecurringTransactions(Scanner sc, FinanceService finance) {
+        try {
+            int accountId = promptInt(sc, "Account ID: ");
+            String type = prompt(sc, "Type (INCOME/EXPENSE): ");
+            BigDecimal amount = promptMoney(sc, "Amount: ");
+            String category = prompt(sc, "Category: ");
+            int day = promptInt(sc, "Day of month (1-31): ");
+            String startText = prompt(sc, "Start date (YYYY-MM-DD): ");
+            String description = prompt(sc, "Description: ");
+            if (type == null || amount == null || category == null || startText == null
+                    || description == null) {
+                System.out.println("Recurring rule cancelled.");
+                return;
+            }
+            RecurringRule rule = finance.addRecurringRule(accountId, type, category, amount,
+                    day, LocalDate.parse(startText.trim()), description);
+            System.out.println("Created recurring rule " + rule.getId() + ".");
+            int count = finance.applyRecurringTransactions(LocalDate.now()).size();
+            System.out.println("Applied " + count + " due occurrence(s); repeats are skipped.");
+        } catch (InsufficientFundsException | java.time.DateTimeException
+                 | IllegalArgumentException failure) {
+            System.out.println(failure.getMessage());
+        }
+    }
+
+    private static void setMonthlyBudget(Scanner sc, FinanceService finance) {
+        try {
+            String category = prompt(sc, "Budget category: ");
+            BigDecimal limit = promptMoney(sc, "Monthly limit: ");
+            String monthText = prompt(sc, "Month (YYYY-MM): ");
+            if (category == null || limit == null || monthText == null) {
+                System.out.println("Budget cancelled.");
+                return;
+            }
+            Budget budget = finance.setMonthlyBudget(category, limit,
+                    YearMonth.parse(monthText.trim()));
+            System.out.println("Budget set: " + budget.getCategory() + " "+budget.getYear()+"-"
+                    + String.format("%02d", budget.getMonth()) + " limit " + budget.getLimit());
+        } catch (java.time.DateTimeException | IllegalArgumentException failure) {
+            System.out.println(failure.getMessage());
+        }
+    }
+
+    private static void viewBudgetAlerts(Scanner sc, FinanceService finance) {
+        try {
+            String monthText = prompt(sc, "Month (YYYY-MM): ");
+            if (monthText == null) return;
+            YearMonth month = YearMonth.parse(monthText.trim());
+            for (Budget budget : finance.getBudgets()) {
+                if (budget.getYear() == month.getYear() && budget.getMonth() == month.getMonthValue()) {
+                    String category = budget.getCategory();
+                    System.out.println(category + " spent "
+                            + finance.getMonthlyCategoryTotal(category, month) + " / " + budget.getLimit()
+                            + "; alerts=" + finance.getTriggeredBudgetAlerts(category, month));
+                }
+            }
+        } catch (java.time.DateTimeException | IllegalArgumentException failure) {
             System.out.println(failure.getMessage());
         }
     }
