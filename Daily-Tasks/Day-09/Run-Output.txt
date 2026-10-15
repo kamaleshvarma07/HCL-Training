@@ -1,0 +1,11 @@
+﻿Pair: Notebook x 3
+Box number: 12; doubled=24.0
+Maximum: 12
+Copied numbers (PECS): [2, 4, 6]
+Products:
+- Notebook: 3.49
+- Pen: 1.25
+- Backpack: 24.99
+Resources acquired: outer, inner
+Closed: inner
+Closed: outer

@@ -1,5 +1,7 @@
 package com.hcltraining.service;
 
+import java.io.IOException;
+import java.io.Reader;
 import java.math.BigDecimal;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -19,28 +21,31 @@ import com.hcltraining.model.Account;
 import com.hcltraining.model.Transaction;
 import com.hcltraining.model.Budget;
 import com.hcltraining.model.RecurringRule;
+import com.hcltraining.repository.InMemoryRepository;
 
 /** In-memory account and transaction operations for the console application. */
 public class FinanceService {
-    // ArrayList preserves the account display order and is efficient for menu iteration.
-    // LinkedHashMap gives constant-time ID lookup and stable account display order.
-    private final Map<Integer, Account> accounts = new java.util.LinkedHashMap<>();
+    // Generic repositories retain insertion order and provide direct ID lookup.
+    private final InMemoryRepository<Account, Integer> accounts =
+            new InMemoryRepository<>(Account::getId);
     // LinkedHashSet prevents duplicate IDs while keeping deterministic ID iteration order.
     private final Set<Integer> accountIds = new LinkedHashSet<>();
     // ArrayList preserves the ledger order used when replaying a balance.
     private final List<Transaction> transactions = new ArrayList<>();
-    // LinkedHashMap provides direct transaction lookup while preserving insertion order.
-    private final Map<Integer, Transaction> transactionsById = new java.util.LinkedHashMap<>();
+    private final InMemoryRepository<Transaction, Integer> transactionsById =
+            new InMemoryRepository<>(Transaction::getId);
     // LinkedHashSet prevents ID reuse, including IDs of transactions that were later deleted.
     private final Set<Integer> transactionIds = new LinkedHashSet<>();
     // ArrayDeque processes submitted transaction work in FIFO order without permitting nulls.
     private final Queue<Transaction> pendingTransactions = new ArrayDeque<>();
     private final Set<Integer> pendingTransactionIds = new LinkedHashSet<>();
-    // Rules iterate in creation order; this key gives fast, idempotent occurrence checks.
-    private final Map<Integer, RecurringRule> recurringRules = new java.util.LinkedHashMap<>();
+    // Rules iterate in creation order; applied occurrences remain separately tracked.
+    private final InMemoryRepository<RecurringRule, Integer> recurringRules =
+            new InMemoryRepository<>(RecurringRule::getId);
     private final Set<OccurrenceKey> appliedOccurrences = new java.util.HashSet<>();
-    // TreeMap keeps budget keys and monthly reports ordered by year/month/category.
-    private final Map<BudgetKey, Budget> budgets = new TreeMap<>();
+    // Budget views are sorted by year/month/category when read.
+    private final InMemoryRepository<Budget, Integer> budgets =
+            new InMemoryRepository<>(Budget::getId);
     private int nextAccountId = 1;
     private int nextTransactionId = 1;
     private int nextRecurringRuleId = 1;
@@ -59,8 +64,24 @@ public class FinanceService {
         if (!accountIds.add(account.getId())) {
             throw new IllegalStateException("Duplicate account ID generated: " + account.getId());
         }
-        accounts.put(account.getId(), account);
+        accounts.save(account);
         return account;
+    }
+
+    /** Loads a fully validated account seed file before adding any rows to the ledger. */
+    public List<Account> loadSeedAccounts(Reader source) throws IOException {
+        List<Account> parsed = SeedDataLoader.readAccounts(source);
+        for (Account account : parsed) {
+            if (accountIds.contains(account.getId())) {
+                throw new IOException("Seed account ID already exists: " + account.getId());
+            }
+        }
+        for (Account account : parsed) {
+            accountIds.add(account.getId());
+            accounts.save(account);
+            nextAccountId = Math.max(nextAccountId, account.getId() + 1);
+        }
+        return List.copyOf(parsed);
     }
 
     public Transaction createAndAddTransaction(int accountId, String type, String category,
@@ -122,7 +143,7 @@ public class FinanceService {
             pendingTransactions.remove();
             pendingTransactionIds.remove(next.getId());
             transactions.add(next);
-            transactionsById.put(next.getId(), next);
+            transactionsById.save(next);
             transactionIds.add(next.getId());
             account.updateBalanceFromLedger(balance);
         }
@@ -147,7 +168,7 @@ public class FinanceService {
         BigDecimal balance = calculateBalance(account, candidateLedger);
 
         transactions.set(index, replacement);
-        transactionsById.put(transactionId, replacement);
+        transactionsById.save(replacement);
         account.updateBalanceFromLedger(balance);
     }
 
@@ -160,7 +181,7 @@ public class FinanceService {
         BigDecimal balance = calculateBalance(account, candidateLedger);
 
         transactions.remove(index);
-        transactionsById.remove(removed.getId());
+        transactionsById.deleteById(removed.getId());
         account.updateBalanceFromLedger(balance);
     }
 
@@ -169,7 +190,7 @@ public class FinanceService {
     }
 
     public Transaction getTransaction(int transactionId) {
-        Transaction transaction = transactionsById.get(transactionId);
+        Transaction transaction = transactionsById.findById(transactionId).orElse(null);
         if (transaction == null) {
             throw new IllegalArgumentException("Transaction not found: " + transactionId);
         }
@@ -177,7 +198,7 @@ public class FinanceService {
     }
 
     public List<Account> getAccounts() {
-        return List.copyOf(accounts.values());
+        return accounts.findAll();
     }
 
     public List<Transaction> getTransactions() {
@@ -193,7 +214,7 @@ public class FinanceService {
     }
 
     private Account requireAccount(int accountId) {
-        Account account = accounts.get(accountId);
+        Account account = accounts.findById(accountId).orElse(null);
         if (account == null) {
             throw new IllegalArgumentException("Account not found: " + accountId);
         }
@@ -244,12 +265,12 @@ public class FinanceService {
         requireAccount(accountId);
         RecurringRule rule = new RecurringRule(nextRecurringRuleId, accountId, type, category,
                 amount, dayOfMonth, startsOn, description);
-        recurringRules.put(nextRecurringRuleId++, rule);
+        recurringRules.save(rule);
         return rule;
     }
 
     public List<RecurringRule> getRecurringRules() {
-        return List.copyOf(recurringRules.values());
+        return recurringRules.findAll();
     }
 
     /** Applies each due monthly occurrence once. Failed transactions remain retryable. */
@@ -258,7 +279,7 @@ public class FinanceService {
         Objects.requireNonNull(throughDate, "throughDate");
         List<DueOccurrence> due = new ArrayList<>();
         YearMonth lastMonth = YearMonth.from(throughDate);
-        for (RecurringRule rule : recurringRules.values()) {
+        for (RecurringRule rule : recurringRules.findAll()) {
             YearMonth month = YearMonth.from(rule.getStartsOn());
             while (!month.isAfter(lastMonth)) {
                 LocalDate occurrence = rule.occurrenceIn(month);
@@ -285,16 +306,19 @@ public class FinanceService {
 
     public Budget setMonthlyBudget(String category, BigDecimal limit, YearMonth month) {
         Objects.requireNonNull(month, "month");
-        BudgetKey key = new BudgetKey(month, normalizeCategory(category));
-        Budget current = budgets.get(key);
+        Budget current = findBudget(normalizeCategory(category), month);
         Budget budget = new Budget(current == null ? nextBudgetId++ : current.getId(),
                 category, limit, month.getMonthValue(), month.getYear());
-        budgets.put(key, budget);
+        budgets.save(budget);
         return budget;
     }
 
     public List<Budget> getBudgets() {
-        return List.copyOf(budgets.values());
+        return budgets.findAll().stream()
+                .sorted(java.util.Comparator.comparing(Budget::getYear)
+                        .thenComparing(Budget::getMonth)
+                        .thenComparing(budget -> normalizeCategory(budget.getCategory())))
+                .toList();
     }
 
     /** Expense totals for the requested month, sorted by normalized category name. */
@@ -317,7 +341,7 @@ public class FinanceService {
 
     /** Returns threshold percentages in strategy order (80 then 100) for this budget month. */
     public List<Integer> getTriggeredBudgetAlerts(String category, YearMonth month) {
-        Budget budget = budgets.get(new BudgetKey(month, normalizeCategory(category)));
+        Budget budget = findBudget(normalizeCategory(category), month);
         if (budget == null) {
             throw new IllegalArgumentException("No budget for " + category + " in " + month + ".");
         }
@@ -340,18 +364,14 @@ public class FinanceService {
         return category.trim().toLowerCase(Locale.ROOT);
     }
 
-    private static final class BudgetKey implements Comparable<BudgetKey> {
-        private final YearMonth month;
-        private final String category;
-        private BudgetKey(YearMonth month, String category) {
-            this.month = month;
-            this.category = category;
-        }
-        @Override public int compareTo(BudgetKey other) {
-            int byMonth = month.compareTo(other.month);
-            return byMonth != 0 ? byMonth : category.compareTo(other.category);
-        }
+    private Budget findBudget(String normalizedCategory, YearMonth month) {
+        return budgets.findAll().stream()
+                .filter(budget -> budget.getYear() == month.getYear()
+                        && budget.getMonth() == month.getMonthValue()
+                        && normalizeCategory(budget.getCategory()).equals(normalizedCategory))
+                .findFirst().orElse(null);
     }
+
     private static final class OccurrenceKey {
         private final int ruleId;
         private final LocalDate date;

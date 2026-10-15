@@ -2,6 +2,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.Scanner;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 import com.hcltraining.exception.InsufficientFundsException;
 import com.hcltraining.exception.InvalidTransactionAmountException;
@@ -16,8 +19,13 @@ public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         FinanceService finance = new FinanceService();
-        // Retains the Day 6 sample account and quick-expense interaction for existing practice.
-        finance.createAccount("Everyday", "Checking", new BigDecimal("500.00"));
+        // Seed accounts come from a validated classpath CSV; an invalid file cannot partially load.
+        try (var seed = Main.class.getResourceAsStream("/seed-accounts.csv")) {
+            if (seed == null) throw new IllegalStateException("Missing seed-accounts.csv resource.");
+            finance.loadSeedAccounts(new InputStreamReader(seed, StandardCharsets.UTF_8));
+        } catch (IOException failure) {
+            throw new IllegalStateException("Unable to load PEBT seed accounts.", failure);
+        }
         boolean running = true;
 
         while (running) {
